@@ -17,6 +17,8 @@
 #    Max :
 #}
 
+#TODO : Add enumaration for CG function and Grph line
+
 $rrdexe = (get-childitem -Path c:\  -Filter rrdtool.exe -Recurse -ErrorAction SilentlyContinue)[0].FullName
 
 function New-RRD {
@@ -48,14 +50,49 @@ function Get-RRdSource {
 
 function Get-DataSource {
     param( $rrdobject)
-    & $rrdexe info $($rrdobject.file)
+    return & $rrdexe info $($rrdobject.file)
 }
 
 function Get-Graph {
-    param( $rrd, $format, $file )
-    "$rrdexe graph $file -a $format --title `"test`" DEF:chrome=$($rrd.file):Process:AVERAGE LINE1:chrome#FF0000:Chrome"
-    & $rrdexe graph $file -a $format --title "test" DEF:chrome=$($rrd.file):Process:AVERAGE LINE1:chrome#FF0000:Chrome
+    param( $format, $file, $title, $def,$vdef, $line  )
+    $param = @('graph', $file, '-a', $format, '--title', "`"$title`"" ) + $def + $vdef +$line
+    "$rrdexe" + $param -join ' '
+#    & $rrdexe $param 
+    $cmdline = $rrdexe + ' ' + $param -join ' '
+    CMD /C $cmdline
 }
+
+function NEw-GraphDEF {
+    param($rrd, $mesure, $cf, $name)
+    $ds = Get-DataSource $rrd
+    if( $ds -like "*$mesure*"){
+        return "DEF:$($name)=$($rrd.file):$($mesure):$($cf.toUpper())"
+    }
+}
+
+function New-graphLine {
+    param($type, $mesure,$color,$desc,$Format,$comment,$padding,[switch]$nl)
+    $ret =''
+    if($type -like 'LINE?'){
+        $ret = "$($type):$($mesure)$($color):`"$($desc)`""
+    }elseif($type -eq 'GPRINT'){
+        $ret = "$($type):$($mesure):`"$($format)`""
+    }elseif($type -eq 'COMMENT'){
+        write-host $nl
+        $ret = "COMMENT:`"$($comment.padLeft($padding))" 
+        if($nl){
+            $ret += "\l"
+        }
+        $ret += "`""
+    }
+    return $ret
+}
+
+function New-GraphVDEF {
+   param($name, $vname,$CF)
+   return "VDEF:$($name)=$($vname),$($cf.toUpper())"
+}
+
 
 function Update-RRD {
     param( $rrd , $values )
