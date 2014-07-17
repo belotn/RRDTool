@@ -176,13 +176,14 @@ function Get-Graph {
     .LINKS
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_data.en.html
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_examples.en.html
-        http://oss.oetiker.ch/rrdtool/doc/rrdgraph.en.html
+        http://oss.oetiker.PNGch/rrdtool/doc/rrdgraph.en.html
 #>
     param( $format, $file, $title, $def,$vdef, $line  )
     $param = @('graph', $file, '-a', $format, '--title', "`"$title`"" ) + $def + $vdef +$line
-    "$rrdexe" + $param -join ' '
+    "$rrdexe" + ' ' + $param -join " "
 #    & $rrdexe $param 
-    $cmdline = $rrdexe + ' ' + $param -join ' '
+    $cmdline = $rrdexe + ' ' + $param -join " "
+    $cmline.length
     CMD /C $cmdline
 }
 
