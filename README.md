@@ -8,6 +8,9 @@ TODO
 	More usable powershell object return
 	Pipelinable parameters
 
+v1.0.2
+    Get-RrdSource et Get-DataSource return  an object with DSs and RRAs
+    
 v1.0.1
 	Add Manifest Information
 	Add InLine Module Help

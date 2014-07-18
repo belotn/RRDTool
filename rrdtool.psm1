@@ -57,7 +57,7 @@ param ([Parameter(Mandatory=$true)][string]$filename,[int]$step, [object[]]$DS, 
     Write-Host "$rrdexe create $filename -s $step $sDs $sRRA"
     $param =  @( 'create', $filename, '-s', $step) + $sDs+ $sRRA
     & $rrdexe $param
-    return new-object -type psobject  -property @{File=$filename }
+    return new-object -type psobject  -property @{'File'=$filename; 'RRA'= $RRA; 'DS' = $DS }
 
 }
 
@@ -129,7 +129,7 @@ function Get-RRdSource {
         Return an object usable with get-graph function
 #>
     param( $filename )
-    return new-object -type psobject  -property @{File=$filename }
+    return  Get-DataSource( new-object -type psobject  -property @{File=$filename } )
 }
 
 function Get-DataSource {
@@ -144,7 +144,48 @@ function Get-DataSource {
         This funciton will change to return a usable object
 #>
     param( $rrdobject)
-    return & $rrdexe info $($rrdobject.file)
+    $content =  & $rrdexe info $($rrdobject.file)
+    $rra = @()
+    $ds = @()
+    $content |% {
+	    if($_ -match '(ds|rra)\[([^\]]*)\]\.([^=]*)\s=\s(.*)'){
+		    if($matches[1] -eq 'ds'){
+			    if($matches[3] -eq 'index'){
+				    $ds+= (new-object PSObject -property @{'Name'=$matches[2]})
+				    $index = $matches[4]
+			    }else{
+				    $ds[$index]= $ds[$index] | add-member -type Noteproperty -Name $matches[3] -value $matches[4] -passthru
+				    try{
+					    $ds[$index]."$($matches[3])" = [float]::Parse($matches[4])
+				    }Catch{
+			
+				    }
+			    }
+		    }elseif($matches[1] -eq 'rra'){
+			    if($matches[2] -ne $index -or $rra.Count -eq 0){
+				    $rra+= (new-object PSObject -property @{'CF'=$matches[4]})
+				    $index = $matches[2]
+			    }elseif( [string]::Concat($matches[3],'=',$matches[4]) -match 'cdp_prep\[(\d*)\]\.([^=]*)=(.*)'){
+    				if(-not($rra[$index].cdp_prep)){
+	    				$rra[$index] = $rra[$index] | add-member -type noteproperty -name cdp_prep -value @() -passthru
+		    		}
+				    if( -not($rra[$index].cdp_prep[$matches[1]]) ){
+					    $rra[$index].cdp_prep+=(new-object PSOBject -property @{ $matches[2] =$matches[3] } )
+				    }else{
+					    $rra[$index].cdp_prep[$matches[1]] = $rra[$index].cdp_prep[$matches[1]] | add-member -type noteproperty -name $matches[2] -value $matches[3] -passthru
+				    }
+			    }else{
+				    $rra[$index] = $rra[$index] | add-member -type Noteproperty -Name $matches[3] -value $matches[4] -passthru
+				    try {
+					    $rra[$index].$($matches[3]) = [float]::Parse($matches[4])
+				    }catch{
+				
+				    }
+			    }
+		    }
+	    } 
+    }
+    return $rrdobject | add-member -type NoteProperty -name DS -value $ds -passthru | add-member -type noteproperty -name RRA -value $rra -passthru
 }
 
 function Get-Graph {
@@ -212,7 +253,7 @@ function NEw-GraphDEF {
 #>
     param($rrd, $mesure, $cf, $name)
     $ds = Get-DataSource $rrd
-    if( $ds -like "*$mesure*"){
+    if( ($rrd.DS |% { $_.NAme) -contains $mesure){
         return "DEF:$($name)=$($rrd.file):$($mesure):$($cf.toUpper())"
     }
 }
