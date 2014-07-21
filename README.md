@@ -3,6 +3,8 @@ RRDTool
 
 RRDTool Module for Powershell
 
+Online Help : http://get-xablog.fr/?p=605
+
 TODO
 	Create Enumaration for limited option set (graph entry, DS type etc)
 	More usable powershell object return
