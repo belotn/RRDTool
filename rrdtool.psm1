@@ -219,8 +219,12 @@ function Get-Graph {
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_examples.en.html
         http://oss.oetiker.PNGch/rrdtool/doc/rrdgraph.en.html
 #>
-    param( $format, $file, $title, $def,$vdef, $line  )
-    $param = @('graph', $file, '-a', $format, '--title', "`"$title`"" ) + $def + $vdef +$line
+    param( $format, $file, $title,$start,  $def,$vdef, $line  )
+    $param = @('graph', $file, '-a', $format, '--title', "`"$title`"") 
+    if($start) {
+        $param += @('-s', $start  )
+    }
+    $param += $def + $vdef +$line
     "$rrdexe" + ' ' + $param -join " "
 #    & $rrdexe $param 
     $cmdline = $rrdexe + ' ' + $param -join " "
@@ -252,8 +256,7 @@ function NEw-GraphDEF {
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_data.en.html
 #>
     param($rrd, $mesure, $cf, $name)
-    $ds = Get-DataSource $rrd
-    if( ($rrd.DS |% { $_.NAme) -contains $mesure){
+    if( ($rrd.DS |% { $_.NAme}) -contains $mesure){
         return "DEF:$($name)=$($rrd.file):$($mesure):$($cf.toUpper())"
     }
 }
@@ -295,7 +298,7 @@ function New-graphLine {
     if($type -like 'LINE?'){
         $ret = "$($type):$($mesure)$($color):`"$($desc)`""
     }elseif($type -eq 'GPRINT'){
-        $ret = "$($type):$($mesure):`"$($format)`""
+        $ret = "$($type):$($mesure):`"$($format.replace(':','\:'))`""
     }elseif($type -eq 'COMMENT'){
         write-host $nl
         $ret = "COMMENT:`"$($comment.padLeft($padding))" 
@@ -325,6 +328,16 @@ function New-GraphVDEF {
         Consolidation function
 #>
    param($name, $vname,$CF)
+   if($CF -eq 'MIN'){
+    $cf = 'MINIMUM'
+   }
+   if($CF -eq 'MAX'){
+    $cf = 'MAXIMUM'
+   }
+   if($CF -eq 'AVG'){
+    $cf = 'AVERAGE'
+   }
+
    return "VDEF:$($name)=$($vname),$($cf.toUpper())"
 }
 

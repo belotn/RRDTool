@@ -8,6 +8,11 @@ TODO
 	More usable powershell object return
 	Pipelinable parameters
 
+v1.0.3
+    Autoprotect ":" in Grpint Format
+    MIN, MAX, AVG in VDEF are automatically transform in real CF name
+    get-graphdef did not try to rewrite RRD.DS field
+
 v1.0.2
     Get-RrdSource et Get-DataSource return  an object with DSs and RRAs
     
