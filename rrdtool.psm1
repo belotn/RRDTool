@@ -213,16 +213,25 @@ function Get-Graph {
 
     .PARAMETER line
         List of displayed item in the graph
+    
+    .PARAMETER start
+        Start grah timestamp
+
+    .PARAMETER end
+        End graph timestamp
             
     .LINKS
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_data.en.html
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_examples.en.html
         http://oss.oetiker.PNGch/rrdtool/doc/rrdgraph.en.html
 #>
-    param( $format, $file, $title,$start,  $def,$vdef, $line  )
+    param( $format, $file, $title,$start,$end,  $def,$vdef, $line  )
     $param = @('graph', $file, '-a', $format, '--title', "`"$title`"") 
     if($start) {
         $param += @('-s', $start  )
+        if($end){
+            $param += @( '-e', $end)
+        }
     }
     $param += $def + $vdef +$line
     "$rrdexe" + ' ' + $param -join " "

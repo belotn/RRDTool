@@ -9,7 +9,8 @@ TODO
 	Create Enumaration for limited option set (graph entry, DS type etc)
 	More usable powershell object return
 	Pipelinable parameters
-
+v1.0.4
+    Get-GRaph now accept Start and End time parameters
 v1.0.3
     Autoprotect ":" in Grpint Format
     MIN, MAX, AVG in VDEF are automatically transform in real CF name
