@@ -225,7 +225,7 @@ function Get-Graph {
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_examples.en.html
         http://oss.oetiker.PNGch/rrdtool/doc/rrdgraph.en.html
 #>
-    param( $format, $file, $title,$start,$end,  $def,$vdef, $line  )
+    param( $format, $file, $title,$start,$end,  $def,$vdef, $line,$cdef  )
     $param = @('graph', $file, '-a', $format, '--title', "`"$title`"") 
     if($start) {
         $param += @('-s', $start  )
@@ -233,7 +233,7 @@ function Get-Graph {
             $param += @( '-e', $end)
         }
     }
-    $param += $def + $vdef +$line
+    $param += $def + $cdef+ $vdef +$line
     "$rrdexe" + ' ' + $param -join " "
 #    & $rrdexe $param 
     $cmdline = $rrdexe + ' ' + $param -join " "
@@ -302,10 +302,13 @@ function New-graphLine {
     .LINKS
         http://oss.oetiker.ch/rrdtool/doc/rrdgraph_data.en.html
 #>
-    param($type, $mesure,$color,$desc,$Format,$comment,$padding,[switch]$nl)
+    param($type, $mesure,$color,$desc,$Format,$comment,$padding,[switch]$nl, [switch]$stack)
     $ret =''
     if($type -like 'LINE?'){
         $ret = "$($type):$($mesure)$($color):`"$($desc)`""
+        if($stack){
+            $ret+=':STACK'
+        }
     }elseif($type -eq 'GPRINT'){
         $ret = "$($type):$($mesure):`"$($format.replace(':','\:'))`""
     }elseif($type -eq 'COMMENT'){
@@ -315,6 +318,11 @@ function New-graphLine {
             $ret += "\l"
         }
         $ret += "`""
+    }elseif($type -eq 'AREA' ){
+        $ret = "$($type):$($mesure)$($color):`"$($desc)`""
+        if($stack){
+            $ret+=':STACK'
+        }
     }
     return $ret
 }
@@ -336,6 +344,8 @@ function New-GraphVDEF {
     .PARAMETER CF
         Consolidation function
 #>
+#Sould Add IF PAram
+
    param($name, $vname,$CF)
    if($CF -eq 'MIN'){
     $cf = 'MINIMUM'
@@ -350,6 +360,26 @@ function New-GraphVDEF {
    return "VDEF:$($name)=$($vname),$($cf.toUpper())"
 }
 
+function New-GRaphCDEF {
+<#
+    .SYNOPSIS
+        Return a string representing a graph CDEF
+
+    .DESCRIPTION
+        Return a string representing a graph CDEF, usable with GET-GRAPH.
+
+    .PARAMETER name
+        The Name of CDEF
+
+    .PARAMETER expr
+        Expression to use
+
+    .LINKS
+        http://oss.oetiker.ch/rrdtool/doc/rrdgraph_data.en.html
+#>
+param($name,$expr)
+    return "CDEF:$($name)=$($expr)"
+}
 
 function Update-RRD {
 <#

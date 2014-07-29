@@ -9,6 +9,10 @@ TODO
 	Create Enumaration for limited option set (graph entry, DS type etc)
 	More usable powershell object return
 	Pipelinable parameters
+v1.0.5
+    Add function CDEF
+    Add graphitems type AREA
+            and stackable line and Aera
 v1.0.4
     Get-GRaph now accept Start and End time parameters
 v1.0.3
