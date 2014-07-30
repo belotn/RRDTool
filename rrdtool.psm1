@@ -405,3 +405,71 @@ function Update-RRD {
     $param
     & $rrdexe $param
 }
+
+function Add-DataSource {
+    param($rrd, $ds)
+    [xml]$xml =& $rrdexe dump $($rrd.File)
+
+    #Add new DS
+
+    $xDs = $xml.CreateElement('ds')
+	$name = $xml.CreateElement('name')
+	$name.AppendChild($xml.createTextNode($ds.name))
+	$type = $xml.CreateElement('type')
+	$type.AppendChild($xml.createTextNode($ds.type))
+	$min_hb = $xml.CreateElement('minimal_heartbeat')
+	$min_hb.AppendChild($xml.createTextNode($ds.heartbeat))
+	$min = $xml.CreateElement('min')
+	$min.AppendChild($xml.createTextNode($ds.min))
+	$max = $xml.CreateElement('max')
+	$max.AppendChild($xml.createTextNode($ds.max))
+    $last_ds = $xml.CreateElement('last_ds')
+    $last_ds.AppendChild($xml.CreateTextNode('UNKN'))
+    $val = $xml.CreateElement('value')
+    $val.AppendChild($xml.CreateTextNode('1.8530980000e+01'))
+    $sec = $xml.CreateElement('unknown_sec')
+    $sec.AppendChild($xml.CreateTextNode('0'))
+
+	$xDs.AppendChild($name)
+	$xDs.AppendChild($type)
+	$xDs.AppendChild($min_hb)
+	$xDs.AppendChild($min)
+	$xDs.AppendChild($max)
+    $xDs.AppendChild($last_ds)
+	$xDs.AppendChild($val)
+	$xDs.AppendChild($sec)
+	$dss = $xml.SelectSingleNode('rrd').selectNodes('ds')
+    $xml.SelectSingleNode('rrd').InsertAfter($Xds,$dss[$dss.Count-1])
+
+	$cdcDs = $xml.createElement('ds')
+	$val = $xml.CreateElement('value')
+	$val.AppendChild($xml.createTextNode('NaN'))
+	$ukdp = $xml.createElement('unknown_datapoints')
+	$ukdp.appendChild($xml.CreateTextNode('0'))
+
+    $cdcDs.AppendChild($val )
+    $cdcDs.AppendChild($ukdp )
+
+
+    $xml.rrd.rra |% {
+        $_.cdp_prep.AppendChild($cdcDs)
+        $cdcDs = $cdcDs.Clone()
+
+    }
+    
+    $v = $xml.CreateElement('V')
+    $v.AppendChild($xml.CreateTextNode('NaN'))
+    $xml.rrd.rra |% {
+        $_.database.row |% {
+            $_.AppendChild($v)
+            $v = $v.clone()
+        }
+    }
+
+    $xml.Save("$pwd\$($rrd.File.replace('rrd','xml'))")
+    mv $($rrd.File) old.rrd
+    & $rrdexe restore $($rrd.File.replace('rrd','xml')) $($rrd.File)
+    if($?){#LAst Command Success
+        Remove-Item old.rrd
+    }
+}

@@ -9,6 +9,8 @@ TODO
 	Create Enumaration for limited option set (graph entry, DS type etc)
 	More usable powershell object return
 	Pipelinable parameters
+v1.0.6
+    Add function to Add a Datasource in an exsiting RRD file
 v1.0.5
     Add function CDEF
     Add graphitems type AREA
